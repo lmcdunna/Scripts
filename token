@@ -1,0 +1,79 @@
+# Create:
+# c:\dev\workspace>blackberry-debugtokenrequest -storepass ******* -devicepin ******** mydebugtoken.bar
+# Info: Debug token created.
+# 
+# Deploy:
+# c:\dev\workspace>blackberry-deploy -installDebugToken mydebugtoken.bar -device 169.254.0.1 -password *******
+# Info: Sending request: Install Debug Token
+# Info: Resetting stale session
+# Info: Sending request: Install Debug Token
+# Info: Action: Install Debug Token
+# Info: File size: 2302
+# result::success
+#
+ 
+#!/bin/bash
+
+keypasswd="123456"
+devicepw="LARdog!123"
+debugtoken="debugtoken99.bar"
+#debugtoken="C:\Documents and Settings\lmcdonough\Local Settings\Application Data\Research In Motion\debugtoken1.bar"
+
+#-------------------------------------------------
+#
+#  Identify the device...
+#
+#-------------------------------------------------
+echo -n "Which Device? ('z'=Z10, '3'=Z30, 'q'=Q10, 'p'=PlayBook, 'e'=EnterPIN): "
+
+read RESPONSE
+	if [ $RESPONSE = "z" ]; then
+                devicePIN="2635e1e5"
+	fi
+	if [ $RESPONSE = "3" ]; then
+                devicePIN="2AE7B2A2"
+	fi
+	if [ $RESPONSE = "q" ]; then
+                devicePIN="2B2C404E"
+	fi
+	if [ $RESPONSE = "p" ]; then
+		echo "don't know your PlayBook PIN"
+	fi
+	if [ $RESPONSE = "e" ]; then
+		echo -n "Enter PIN: "
+                read devicePIN
+	fi
+
+#-------------------------------------------------
+#
+#  Echo Device PIN
+#
+#-------------------------------------------------
+echo "   ...Device PIN= " $devicePIN
+
+
+#-------------------------------------------------
+#
+#  Create a new debug token
+#
+#-------------------------------------------------
+echo -n "Create a new token? ('y'=YES, anything else = SKIP): "
+read RESPONSE
+	if [ $RESPONSE = "y" ]; then
+                echo "   ...CREATING a new debug token..."
+                blackberry-debugtokenrequest.bat -storepass $keypasswd -devicepin $devicePIN $debugtoken
+	fi
+
+
+#-------------------------------------------------
+#
+#  Deploy the token on the device
+#
+#-------------------------------------------------
+echo -n "Upload new token to device? ('y'=YES, anything else = SKIP): "
+read RESPONSE
+	if [ $RESPONSE = "y" ]; then
+                echo "   ...UPLOADING new token..."
+                blackberry-deploy.bat -installDebugToken $debugtoken -device 169.254.0.1 -password $devicepw
+	fi
+
