@@ -15,7 +15,7 @@
 #!/bin/bash
 
 keypasswd="123456"
-devicepw="LARdog!123"
+devicepw="password"
 debugtoken="debugtoken99.bar"
 #debugtoken="C:\Documents and Settings\lmcdonough\Local Settings\Application Data\Research In Motion\debugtoken1.bar"
 
