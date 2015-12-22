@@ -1,0 +1,140 @@
+#!/bin/bash
+
+###########################################################
+#                                                         #
+# Script:   convert                                       #
+#                                                         #
+# This script steps through the various command line      #
+# commands in the android runtime sdk.  Use this to       #
+# quickly check, convert, sign, and deploy your apk to    #
+# BlackBerry PlayBook.  If you make improvements to this  #
+# script, please send them to me.  Thanks!  --Larry       #
+# Written: Oct. 2011                                      #
+#                                                         #
+# Usage:  $ convert myApp.apk                             #
+#                                                         #
+#                                                         #
+###########################################################
+
+#
+# Set set these variables according to your setup. 
+#
+keypath="C:\Documents and Settings\lmcdonough\Local Settings\Application Data\Research In Motion\Author.p12"
+debugtoken="C:\Documents and Settings\lmcdonough\Local Settings\Application Data\Research In Motion\debugtoken1.bar"
+keypasswd="yourKeyPasswordGoesHere"
+devicepw="yourDevicePasswordGoesHere"
+
+
+#
+# set the version, apk, and bar file
+#
+#version=1.0.0
+apkfile="$@"
+barfile="${apkfile%.*}.bar"
+
+#--------------------------------------------------------
+# 
+# Function continue ( string ) 
+# 
+# Prompt user to continue to "$1" (the string passed in)
+# and either exits or sets global string "skip" 
+# to 0 (meaning don't skip) or 1 (meaning do skip this step)
+#
+#--------------------------------------------------------
+#
+function continue {
+	skip=0
+	echo
+	echo -n "=====================> Continue to "$1"? ('y'=YES, 'n'=NO/EXIT, 's'=SKIP): "
+	read RESPONSE
+
+	if [ $RESPONSE = "n" ]; then
+		echo "Goodbye!"
+		exit
+	fi
+	if [ $RESPONSE = "N" ]; then
+		echo "Goodbye!"
+		exit
+	fi
+	if [ $RESPONSE = "s" ]; then
+        skip=1
+		echo "=====================> Skipping $1..."
+	fi
+	echo
+}
+
+
+#--------------------------------------------------------
+#
+#  apk2barVerifier
+#
+#--------------------------------------------------------
+#
+echo -n "=====================> Run apk2barVerifier? ('y'=YES, anything else = SKIP): "
+read RESPONSE
+	if [ $RESPONSE = "y" ]; then
+		echo "Running apk2barVerifier $apkfile..."
+		apk2barVerifier $apkfile
+		echo
+	fi
+continue apk2bar
+
+#--------------------------------------------------------
+#
+#  apk2bar
+#
+#--------------------------------------------------------
+#
+if [ $skip = 0 ]; then
+	echo "Running apk2bar $apkfile..."
+	apk2bar $apkfile -d "$debugtoken"
+fi
+continue signing 
+
+
+#--------------------------------------------------------
+#
+#  batchbar-signer
+#
+#--------------------------------------------------------
+#
+if [ $skip = 0 ]; then
+
+    #--------------------------------------------------------
+    #  should we bump up the version number??
+    #  this allows us to resign a bar file that's been signed before  
+    #--------------------------------------------------------
+    #
+	echo -n "=====================> Increment the bar file version number? (only necessary if re-signing)? (y or n): "
+	read RESPONSE
+		if [ $RESPONSE = "y" ]; then
+           #
+           # Increment the version number
+           # Need to repackage again with "-m" since we bumped the version number.  Don't know why, just do...
+           #
+		   kickver $barfile "+1"
+		   apk2bar $apkfile -m
+		fi
+
+    #--------------------------------------------------------
+    #
+    # do the signing...
+    #
+    #--------------------------------------------------------
+    #
+	batchbar-signer $barfile "$keypath" $keypasswd
+fi
+continue "Deployment to PlayBook"
+
+#--------------------------------------------------------
+#
+#  blackberry-deploy
+#
+#--------------------------------------------------------
+if [ $skip = 0 ]; then
+	echo "Running backberry-deploy $barfile..."
+	blackberry-deploy -installApp -device 169.254.0.1 -package $barfile -password $devicepw
+fi
+
+
+
